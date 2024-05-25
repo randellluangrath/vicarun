@@ -1,11 +1,8 @@
-import StoreProvider from "@/providers/StoreProvider";
-import React from "react";
-import DashboardPage from "@/components/client/DashboardPage";
-import Header from "@/app/dashboard/Header";
+import DashboardPage from "@/components/client/dashboardPage";
 
 const Page = () => {
     return (
-        <DashboardPage/>
+        <DashboardPage initialSessions={[]}/>
     );
 };
 

@@ -28,26 +28,22 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({onSessionEnd}) => {
         setIsLoading(true);
         setProgress(0);
 
-        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 2000));
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1000));
 
         try {
-            const newStream = await navigator.mediaDevices.getUserMedia({video: true});
-            streams.current.add(newStream);
-            setVideoStream(newStream);
-            console.log(`Camera enabled: ${newStream.id}`);
-
             // Simulate progress increment
             let progressValue = 0;
             const interval = setInterval(() => {
                 if (progressValue < 100) {
-                    progressValue += 10;
+                    progressValue += 25;
                     setProgress(progressValue);
                 } else {
                     clearInterval(interval);
                 }
             }, 200);
 
-            await Promise.all([minLoadingTime]);
+            await Promise.all([minLoadingTime, setVideoStream()]);
+
         } catch (error) {
             console.error("Error accessing camera: ", error);
         } finally {
@@ -55,11 +51,14 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({onSessionEnd}) => {
         }
     };
 
-    const setVideoStream = (stream: MediaStream) => {
+    const setVideoStream = async () => {
+        const newStream = await navigator.mediaDevices.getUserMedia({video: true});
+        streams.current.add(newStream);
         if (videoRef.current) {
-            videoRef.current.srcObject = stream;
+            videoRef.current.srcObject = newStream;
         }
-    };
+        console.log(`Camera enabled: ${newStream.id}`);
+    }
 
     const disableAllCameras = () => {
         streams.current.forEach(stream => {
@@ -131,11 +130,13 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({onSessionEnd}) => {
                 )}
                 {isLoading && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-white bg-opacity-50">
-                        <Progress value={progress} className="w-[60%]"/>
+                        <Progress value={progress} className="w-[60%] h-[.5%]"/>
                     </div>
                 )}
             </div>
-            <div className="absolute bottom-0 w-full flex justify-center p-4 gap-5">
+
+            <div className="absolute bottom-0 w-full flex justify-center p-4 gap-5 py-6
+            ">
                 {isSessionActive && !isLoading && (
                     <>
                         <Button
