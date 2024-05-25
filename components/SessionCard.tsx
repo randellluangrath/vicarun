@@ -1,10 +1,10 @@
 import React from 'react';
 
-interface SessionWidgetProps {
+interface SessionCardProps {
     session: { id: string; blob: Blob };
 }
 
-const SessionWidget: React.FC<SessionWidgetProps> = ({session}) => {
+const SessionCard: React.FC<SessionCardProps> = ({session}) => {
     return (
         <div className="p-4 border rounded-lg flex items-center justify-between">
             <video
@@ -27,4 +27,4 @@ const SessionWidget: React.FC<SessionWidgetProps> = ({session}) => {
     );
 };
 
-export default SessionWidget;
+export default SessionCard;

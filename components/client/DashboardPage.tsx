@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import SessionCapture from '@/components/SessionCapture';
-import SessionWidget from '@/components/SessionWidget'; // Import the newly created widget
+import SessionCard from '@/components/SessionCard'; // Import the newly created widget
 import Header from '@/app/dashboard/Header';
 
 const DashboardPage = () => {
@@ -35,7 +35,7 @@ const DashboardPage = () => {
                             {sessions.length > 0 ? (
                                 <div className="space-y-4">
                                     {sessions.map((session) => (
-                                        <SessionWidget key={session.id} session={session} />
+                                        <SessionCard key={session.id} session={session} />
                                     ))}
                                 </div>
                             ) : (
