@@ -18,7 +18,6 @@ export default function RootLayout({children}: RootLayoutProps) {
                 GeistMono.variable
             )}
         >
-        <Header/>
         {children}
         </body>
         </html>
