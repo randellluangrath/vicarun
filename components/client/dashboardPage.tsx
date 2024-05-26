@@ -19,10 +19,10 @@ const DashboardPage = ({ initialSessions }: DashboardPageProps) => {
     };
 
     return (
-        <div className="relative w-full h-screen flex flex-col">
-            <div className="flex flex-col flex-grow items-center justify-center p-4">
+        <div className="relative w-full h-screen flex flex-col my-16">
+            <div className="flex flex-col flex-grow items-center justify-center p-2">
                 <div className="w-full max-w-2xl flex-grow flex flex-col items-center justify-center">
-                    {sessions.length > 0 ? (
+                    {sessions && sessions.length > 0 ? (
                         <div className="space-y-4 w-full overflow-auto">
                             {sessions.map((session) => (
                                 <SessionCard key={session.id} session={session} />
