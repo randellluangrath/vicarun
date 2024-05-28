@@ -1,29 +1,29 @@
-import {Firestore, Timestamp} from '@google-cloud/firestore';
-import path from "path";
+// import {Firestore, Timestamp} from '@google-cloud/firestore';
+// import path from "path";
 import {Session} from "@/lib/models/session";
-
-const firestore = new Firestore({
-    projectId: process.env.GOOGLE_CLOUD_PROJECT,
-    keyFilename: path.join(process.cwd(), process.env.GOOGLE_APPLICATION_CREDENTIALS!),
-});
-
-export const saveSessionMetadata = async (userId: string[] | undefined, blobUrl: string) => {
-    const sessionRef = firestore.collection('sessions').doc();
-    await sessionRef.set({
-        userId,
-        blobUrl,
-        createdAt: Timestamp.now(),
-    });
-    return sessionRef.id;
-};
-
-export const getSessions = async () => {
-    const sessionsSnapshot = await firestore.collection('sessions').get();
-    return sessionsSnapshot.docs.map((doc: { id: any; data: () => any; }) => ({
-        id: doc.id,
-        ...doc.data(),
-    }));
-};
+//
+// const firestore = new Firestore({
+//     projectId: process.env.GOOGLE_CLOUD_PROJECT,
+//     keyFilename: path.join(process.cwd(), process.env.GOOGLE_APPLICATION_CREDENTIALS!),
+// });
+//
+// export const saveSessionMetadata = async (userId: string[] | undefined, blobUrl: string) => {
+//     const sessionRef = firestore.collection('sessions').doc();
+//     await sessionRef.set({
+//         userId,
+//         blobUrl,
+//         createdAt: Timestamp.now(),
+//     });
+//     return sessionRef.id;
+// };
+//
+// export const getSessions = async () => {
+//     const sessionsSnapshot = await firestore.collection('sessions').get();
+//     return sessionsSnapshot.docs.map((doc: { id: any; data: () => any; }) => ({
+//         id: doc.id,
+//         ...doc.data(),
+//     }));
+// };
 
 export const getMockSessions = async () => {
     const mockSessions: Session[] = [
