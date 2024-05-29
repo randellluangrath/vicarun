@@ -97,8 +97,8 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({onSessionEnd}) => {
                 error => console.error(error),
                 {
                     enableHighAccuracy: true,
-                    maximumAge: 0,
-                    timeout: 5000
+                    maximumAge: 20000,
+                    timeout: 10000
                 },
             );
         }
@@ -126,7 +126,7 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({onSessionEnd}) => {
                     </div>
                     <div className="flex-col"><p className="text-xs">Time Elapsed</p>  <p>{formatTime(elapsedTime)}</p>
                     </div>
-                    <div className="flex-col"><p className="text-xs">Avg Speed (MPH)</p> <p>{averageSpeed} mph</p></div>
+                    <div className="flex-col"><p className="text-xs">Avg Speed (MPH)</p> <p>{averageSpeed.toFixed(2)} mph</p></div>
                 </div>
             </div>
 
