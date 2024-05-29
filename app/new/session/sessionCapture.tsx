@@ -1,166 +1,116 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { getDistance } from 'geolib';
 
 interface SessionCaptureProps {
-    onSessionEnd: (blob: Blob) => void;
+    onSessionEnd: (distance: number) => void;
 }
 
 const SessionCapture: React.FC<SessionCaptureProps> = ({ onSessionEnd }) => {
     const [isSessionActive, setIsSessionActive] = useState(false);
-    const [isRecording, setIsRecording] = useState(false);
-    const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [progress, setProgress] = useState(0);
-    const streams = useRef<Set<MediaStream>>(new Set());
-    const videoRef = useRef<HTMLVideoElement | null>(null);
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const [distance, setDistance] = useState(0);
+    const [currentPosition, setCurrentPosition] = useState<GeolocationPosition | null>(null);
+    const watchIdRef = useRef<number | null>(null);
+    const geofenceRadius = useRef<number>(12); // initial radius in meters
+    const SAMPLE_RATE = 2000; // 2 seconds
 
     useEffect(() => {
-        handleSessionStart();
-    }, []);
-
-    const enableCamera = async () => {
-        if (streams.current.size > 0) {
-            console.log("Camera already enabled");
-            return;
-        }
-        setIsLoading(true);
-        setProgress(0);
-
-        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1000));
-
-        try {
-            let progressValue = 0;
+        if (isSessionActive) {
             const interval = setInterval(() => {
-                if (progressValue < 100) {
-                    progressValue += 25;
-                    setProgress(progressValue);
-                } else {
-                    clearInterval(interval);
+                if (currentPosition) {
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+
+                            console.log(position);
+
+                            const dist = getDistance(
+                                { latitude: currentPosition.coords.latitude, longitude: currentPosition.coords.longitude },
+                                { latitude: position.coords.latitude, longitude: position.coords.longitude }
+                            );
+
+                            if (dist > geofenceRadius.current) {
+                                setDistance(prev => prev + dist);
+                                setCurrentPosition(position);
+                                updateGeofenceRadius(position.coords.speed);
+                            }
+                        },
+                        error => console.error(error),
+                        { enableHighAccuracy: true }
+                    );
                 }
-            }, 200);
-
-            await Promise.all([minLoadingTime, setVideoStream()]);
-        } catch (error) {
-            console.error("Error accessing camera: ", error);
-        } finally {
-            setIsLoading(false);
+            }, SAMPLE_RATE);
+            return () => clearInterval(interval);
         }
-    };
-
-    const setVideoStream = async () => {
-        const constraints = {
-            video: {
-                facingMode: 'user' // Use 'user' for front camera, 'environment' for rear camera
-            }
-        };
-        const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-        streams.current.add(newStream);
-        if (videoRef.current) {
-            videoRef.current.srcObject = newStream;
-        }
-        console.log(`Camera enabled: ${newStream.id}`);
-    };
-
-    const disableAllCameras = () => {
-        streams.current.forEach(stream => {
-            console.log(`Disabling camera: ${stream.id}`);
-            stream.getTracks().forEach(track => track.stop());
-            if (videoRef.current) {
-                videoRef.current.srcObject = null;
-            }
-        });
-        streams.current.clear();
-    };
+    }, [isSessionActive, currentPosition]);
 
     const handleSessionStart = () => {
         setIsSessionActive(true);
-        enableCamera();
-        setRecordedChunks([]);
+        setDistance(0);
+        setCurrentPosition(null);
+        startTracking();
     };
 
     const handleSessionEnd = () => {
         setIsSessionActive(false);
-        combineClips();
-        disableAllCameras();
+        stopTracking();
+        onSessionEnd(distance);
     };
 
-    const handleMouseDown = () => {
-        if (streams.current.size > 0) {
-            const stream = Array.from(streams.current)[0];
-            const mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    addChunk(event.data);
-                }
-            };
-            mediaRecorder.start();
-            mediaRecorderRef.current = mediaRecorder;
-            setIsRecording(true);
+    const startTracking = () => {
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                position => setCurrentPosition(position),
+                error => console.error(error),
+                { enableHighAccuracy: true }
+            );
         }
     };
 
-    const handleMouseUp = () => {
-        if (mediaRecorderRef.current) {
-            mediaRecorderRef.current.stop();
-            mediaRecorderRef.current = null;
-            setIsRecording(false);
+    const stopTracking = () => {
+        if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
         }
     };
 
-    const handleContextMenu = (event: React.MouseEvent) => {
-        event.preventDefault();
-    };
+    const updateGeofenceRadius = (speed: number | null) => {
+        if (speed === null) return;
 
-    const addChunk = (chunk: Blob) => {
-        const existingBlob = new Blob(recordedChunks);
-        const newBlob = new Blob([existingBlob, chunk], { type: 'video/webm' });
-        setRecordedChunks([newBlob]);
-    };
-
-    const combineClips = () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
-        console.log(blob);
-        onSessionEnd(blob);
+        if (speed < 1.4) { // walking speed
+            geofenceRadius.current = 12; // 12 feet ~ 3.7 meters
+        } else if (speed < 5.6) { // running speed
+            geofenceRadius.current = 25; // double the radius for running
+        } else { // biking or driving
+            geofenceRadius.current = 100; // much larger radius
+        }
     };
 
     return (
         <div className="relative w-full h-screen">
-            <div className="w-full h-full flex flex-col items-center relative">
-                {isSessionActive && (
-                    <video ref={videoRef} autoPlay muted className="w-full h-full object-cover" />
-                )}
-                {(isLoading || isRecording) && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-white bg-opacity-50">
-                        {isLoading ? <Progress value={progress} className="w-[60%] h-[.5%]" /> : null}
-                    </div>
-                )}
-            </div>
-
             <div className="absolute top-0 left-0 m-4">
-                {isSessionActive && !isLoading && (
+                {isSessionActive && (
                     <Button size={"sm"} variant={"ghost"} onClick={handleSessionEnd}>
                         <span className={"text-3xl text-white font-extralight"}>x</span>
                     </Button>
                 )}
             </div>
 
+            <div className="absolute top-0 right-0 m-4">
+                {isSessionActive && (
+                    <div className="bg-white p-2 rounded shadow">
+                        <p>Distance Traveled: {(distance / 1000).toFixed(2)} km</p>
+                    </div>
+                )}
+            </div>
+
             <div className="absolute bottom-0 w-full flex justify-center p-4 gap-5 py-6">
-                {isSessionActive && !isLoading && (
-                    <>
-                        <Button
-                            variant={"secondary"}
-                            size={"lg"}
-                            onMouseDown={handleMouseDown}
-                            onMouseUp={handleMouseUp}
-                            onTouchStart={handleMouseDown}
-                            onTouchEnd={handleMouseUp}
-                            onContextMenu={handleContextMenu}
-                        >
-                            {isRecording ? "Recording..." : "Capture this moment"}
-                        </Button>
-                    </>
+                {!isSessionActive && (
+                    <Button
+                        variant={"secondary"}
+                        size={"lg"}
+                        onClick={handleSessionStart}
+                    >
+                        Start Tracking
+                    </Button>
                 )}
             </div>
         </div>
