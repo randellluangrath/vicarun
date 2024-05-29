@@ -1,15 +1,15 @@
-import React, { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { getDistance } from 'geolib';
+import React, {useState, useRef} from 'react';
+import {Button} from '@/components/ui/button';
+import {getPreciseDistance} from 'geolib';
 
 interface SessionCaptureProps {
     onSessionEnd: (distance: number) => void;
 }
 
-const SessionCapture: React.FC<SessionCaptureProps> = ({ onSessionEnd }) => {
+const SessionCapture: React.FC<SessionCaptureProps> = ({onSessionEnd}) => {
     const [isSessionActive, setIsSessionActive] = useState(false);
     const [distance, setDistance] = useState(0);
-    const [currentPosition, setCurrentPosition] = useState<GeolocationPosition | null>(null);
+    const currentPositionRef = useRef<GeolocationPosition | null>(null);
     const watchIdRef = useRef<number | null>(null);
     const geofenceRadius = useRef<number>(12); // initial radius in meters
     const [polledPositions, setPolledPositions] = useState<GeolocationPosition[]>([]);
@@ -17,7 +17,6 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({ onSessionEnd }) => {
     const handleSessionStart = () => {
         setIsSessionActive(true);
         setDistance(0);
-        setCurrentPosition(null);
         startTracking();
     };
 
@@ -32,11 +31,11 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({ onSessionEnd }) => {
             watchIdRef.current = navigator.geolocation.watchPosition(
                 position => {
                     setPolledPositions(prev => [...prev, position]);
-                    if (currentPosition) {
-                        const dist = getDistance(
+                    if (currentPositionRef.current) {
+                        const dist = getPreciseDistance(
                             {
-                                latitude: currentPosition.coords.latitude,
-                                longitude: currentPosition.coords.longitude
+                                latitude: currentPositionRef.current.coords.latitude,
+                                longitude: currentPositionRef.current.coords.longitude
                             },
                             {
                                 latitude: position.coords.latitude,
@@ -44,14 +43,12 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({ onSessionEnd }) => {
                             }
                         );
 
-                        if (dist) {
+                        if (dist && dist > geofenceRadius.current) {
                             setDistance(prev => prev + dist * 0.000621371); // convert to miles
-                            setCurrentPosition(position);
                             updateGeofenceRadius(position.coords.speed);
                         }
-                    } else {
-                        setCurrentPosition(position);
                     }
+                    currentPositionRef.current = position;
                 },
                 error => console.error(error),
                 {
@@ -96,7 +93,8 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({ onSessionEnd }) => {
                     <div className="bg-white p-2 rounded shadow">
                         <p className={"font-bold"}>Distance Traveled: {distance.toFixed(2)} miles</p>
                         {polledPositions.map((position, index) => (
-                            <p key={index}>Polled Position {index + 1}: Latitude {position.coords.latitude.toFixed(6)}, Longitude {position.coords.longitude.toFixed(6)}</p>
+                            <p key={index}>Polled Position {index + 1}: Latitude {position.coords.latitude.toFixed(6)},
+                                Longitude {position.coords.longitude.toFixed(6)}</p>
                         ))}
                     </div>
                 )}
