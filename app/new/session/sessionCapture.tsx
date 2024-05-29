@@ -50,7 +50,12 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({ onSessionEnd }) => {
     };
 
     const setVideoStream = async () => {
-        const newStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const constraints = {
+            video: {
+                facingMode: 'user' // Use 'user' for front camera, 'environment' for rear camera
+            }
+        };
+        const newStream = await navigator.mediaDevices.getUserMedia(constraints);
         streams.current.add(newStream);
         if (videoRef.current) {
             videoRef.current.srcObject = newStream;

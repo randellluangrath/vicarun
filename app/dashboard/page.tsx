@@ -1,5 +1,5 @@
 // This function fetches data from your API or database
-import DashboardPage from "@/components/client/dashboardPage";
+import DashboardPage from "@/app/dashboard/dashboardPage";
 import {Session} from "@/lib/models/session";
 import {getMockSessions} from "@/lib/utils/firestore";
 

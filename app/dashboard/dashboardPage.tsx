@@ -3,9 +3,8 @@
 import {useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {Button} from '@/components/ui/button';
-import SessionCard from "@/components/sessionCard";
-import Footer from "@/components/layout/footer";
-import Header from "@/components/layout/header";
+import SessionCard from "@/app/dashboard/sessionCard";
+import Header from "@/app/dashboard/header";
 
 interface DashboardPageProps {
     initialSessions: any[];
@@ -35,11 +34,11 @@ const DashboardPage = ({initialSessions}: DashboardPageProps) => {
                     )}
                 </div>
             </div>
-            <Footer>
+            <div className="w-full flex justify-center py-2 bg-white border-t shadow-lg fixed bottom-0">
                 <Button size={"sm"} variant={"ghost"} onClick={handleStartNewSession}>
-                    <span className={"text-3xl font-semibold"}>+</span>
+                    <span className={"text-2xl font-semibold"}>+</span>
                 </Button>
-            </Footer>
+            </div>
         </div>
     );
 };

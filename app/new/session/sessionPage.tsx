@@ -1,7 +1,7 @@
 'use client';
 
 import {useRouter} from 'next/navigation';
-import SessionCapture from '@/components/sessionCapture';
+import SessionCapture from '@/app/new/session/sessionCapture';
 
 const NewSessionPage = () => {
     const router = useRouter();
@@ -12,7 +12,7 @@ const NewSessionPage = () => {
             // Assuming you have a method to save the session
             // saveSession(blob);
         }
-        // Navigate back to the dashboard
+        // Navigate back to the dashboard and refresh the page
         router.push('/dashboard');
     };
 

@@ -1,7 +1,6 @@
 import './globals.css';
 import {ReactNode} from "react";
 import {GeistMono} from 'geist/font/mono';
-import Header from "@/components/layout/header";
 import {cn} from "@/lib/utils/utils";
 
 interface RootLayoutProps {
