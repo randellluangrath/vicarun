@@ -12,7 +12,7 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({onSessionEnd}) => {
     const currentPositionRef = useRef<GeolocationPosition | null>(null);
     const watchIdRef = useRef<number | null>(null);
     const geofenceRadius = useRef<number>(12); // initial radius in meters
-    const [polledPositions, setPolledPositions] = useState<GeolocationPosition[]>([]);
+    const [distances, setDistances] = useState<number[]>([]);
 
     const handleSessionStart = () => {
         setIsSessionActive(true);
@@ -30,7 +30,7 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({onSessionEnd}) => {
         if ('geolocation' in navigator) {
             watchIdRef.current = navigator.geolocation.watchPosition(
                 position => {
-                    setPolledPositions(prev => [...prev, position]);
+                    console.log(currentPositionRef.current)
                     if (currentPositionRef.current) {
                         const dist = getPreciseDistance(
                             {
@@ -43,8 +43,10 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({onSessionEnd}) => {
                             }
                         );
 
-                        if (dist && dist > geofenceRadius.current) {
-                            setDistance(prev => prev + dist * 0.000621371); // convert to miles
+                        setDistances(prev => [...prev, dist]);
+
+                        if (dist) {
+                            setDistance(prev => prev + (dist * 0.000621371)); // convert to miles
                             updateGeofenceRadius(position.coords.speed);
                         }
                     }
@@ -91,10 +93,9 @@ const SessionCapture: React.FC<SessionCaptureProps> = ({onSessionEnd}) => {
             <div className="absolute top-0 right-0 m-4">
                 {isSessionActive && (
                     <div className="bg-white p-2 rounded shadow">
-                        <p className={"font-bold"}>Distance Traveled: {distance.toFixed(2)} miles</p>
-                        {polledPositions.map((position, index) => (
-                            <p key={index}>Polled Position {index + 1}: Latitude {position.coords.latitude.toFixed(6)},
-                                Longitude {position.coords.longitude.toFixed(6)}</p>
+                        <p className={"font-bold"}>Distance Traveled: {distance} miles</p>
+                        {distances.map((distance, index) => (
+                            <p key={index}>Distance logged: {distance}</p>
                         ))}
                     </div>
                 )}
