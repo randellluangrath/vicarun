@@ -36,7 +36,7 @@ const DashboardPage = ({initialSessions}: DashboardPageProps) => {
             </div>
             <div className="w-full flex justify-center py-2 bg-white border-t shadow-lg fixed bottom-0">
                 <Button size={"sm"} variant={"ghost"} onClick={handleStartNewSession}>
-                    <span className={"text-2xl font-semibold"}>+</span>
+                    Start
                 </Button>
             </div>
         </div>
